@@ -5,42 +5,34 @@ from easyAI.Player import Human_Player
 class GameController(TwoPlayerGame):
     def __init__(self, players):
         self.players = players
-        self.nplayer = 1  # Người chơi hiện tại
+        self.current_player = 1  # phiên bản mới dùng current_player
         self.board = [0] * 9
-
-    
-    @property
-    def current_player(self):
-        return self.nplayer
-
-    @current_player.setter
-    def current_player(self, value):
-        self.nplayer = value
 
     def possible_moves(self):
         return [a + 1 for a, b in enumerate(self.board) if b == 0]
 
     def make_move(self, move):
-        self.board[int(move) - 1] = self.nplayer
+        self.board[int(move) - 1] = self.current_player
 
     def loss_condition(self):
-        possible_combinations = [
+        opponent = 3 - self.current_player
+        winning_combos = [
             [1, 2, 3], [4, 5, 6], [7, 8, 9],
             [1, 4, 7], [2, 5, 8], [3, 6, 9],
             [1, 5, 9], [3, 5, 7]
         ]
-        opponent = 3 - self.nplayer
-        return any([
-            all([(self.board[i - 1] == opponent) for i in combination])
-            for combination in possible_combinations
-        ])
+        return any(
+            all(self.board[i - 1] == opponent for i in combo)
+            for combo in winning_combos
+        )
 
     def is_over(self):
         return (self.possible_moves() == []) or self.loss_condition()
 
     def show(self):
+        symbols = ['. ', 'O', 'X']
         print('\n' + '\n'.join([
-            ' '.join([['. ', 'O', 'X'][self.board[3 * j + i]] for i in range(3)])
+            ' '.join([symbols[self.board[3 * j + i]] for i in range(3)])
             for j in range(3)
         ]))
 
