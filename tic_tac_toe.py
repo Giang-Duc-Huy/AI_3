@@ -8,7 +8,7 @@ class GameController(TwoPlayerGame):
         self.nplayer = 1  # Người chơi hiện tại
         self.board = [0] * 9
 
-    # Hack để easyAI 2.x hoạt động
+    
     @property
     def current_player(self):
         return self.nplayer
