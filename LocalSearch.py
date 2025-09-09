@@ -9,12 +9,10 @@ import random
 class NQueensProblem(SearchProblem):
     def __init__(self, N):
         self.N = N
-        # trạng thái: danh sách [col0, col1, ..., colN-1] (hàng i đặt hậu ở cột col[i])
         initial_state = tuple(random.randint(0, N - 1) for _ in range(N))
         super().__init__(initial_state)
 
     def actions(self, state):
-        """Mỗi action = (row, new_col) => di chuyển hậu ở hàng row sang cột new_col"""
         actions = []
         for row in range(self.N):
             for col in range(self.N):
@@ -23,18 +21,13 @@ class NQueensProblem(SearchProblem):
         return actions
 
     def result(self, state, action):
-        """Trả về state mới sau khi áp dụng action"""
         row, col = action
         new_state = list(state)
         new_state[row] = col
         return tuple(new_state)
 
     def value(self, state):
-        """Giá trị = số cặp hậu KHÔNG tấn công nhau (càng cao càng tốt)"""
         return self.max_pairs() - self.conflicts(state)
-
-  
-    # Helper
 
     def conflicts(self, state):
         cnt = 0
@@ -45,12 +38,24 @@ class NQueensProblem(SearchProblem):
         return cnt
 
     def max_pairs(self):
-        """Số cặp hậu tối đa (N choose 2)"""
         return self.N * (self.N - 1) // 2
 
     def generate_random_state(self):
-        """Cần cho GA, SA"""
         return tuple(random.randint(0, self.N - 1) for _ in range(self.N))
+
+    def crossover(self, state1, state2):
+        cut = random.randint(1, self.N - 2)
+        child = state1[:cut] + state2[cut:]
+        return child
+
+    def mutate(self, state):
+        row = random.randint(0, self.N - 1)
+        new_col = random.randint(0, self.N - 1)
+        new_state = list(state)
+        new_state[row] = new_col
+        return tuple(new_state)
+
+
 
 # In bàn cờ
 def print_board(state):

@@ -1,52 +1,44 @@
 import heapq
+import random
 
 # Trạng thái đích
-goal_state = [[1,2,3],
-              [4,5,6],
-              [7,8,0]]
+goal_state = [[1, 2, 3],
+              [4, 5, 6],
+              [7, 8, 0]]
 
-# Các hướng di chuyển: lên, xuống, trái, phải
-moves = [(-1,0),(1,0),(0,-1),(0,1)]
+moves = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+
 
 def find_pos(state, value):
-    """Tìm vị trí (x,y) của 1 số trong ma trận"""
     for i in range(3):
         for j in range(3):
             if state[i][j] == value:
                 return i, j
     return None
 
-def heuristic_misplaced(state):
-    """Heuristic 1: số ô sai chỗ"""
-    h = 0
-    for i in range(3):
-        for j in range(3):
-            if state[i][j] != 0 and state[i][j] != goal_state[i][j]:
-                h += 1
-    return h
 
 def heuristic_manhattan(state):
-    """Heuristic 2: tổng khoảng cách Manhattan"""
     h = 0
     for i in range(3):
         for j in range(3):
             val = state[i][j]
             if val != 0:
-                goal_i, goal_j = find_pos(goal_state, val)
-                h += abs(i - goal_i) + abs(j - goal_j)
+                gi, gj = find_pos(goal_state, val)
+                h += abs(i - gi) + abs(j - gj)
     return h
 
+
 def state_to_tuple(state):
-    """Chuyển từ ma trận sang tuple để lưu trong set"""
-    return tuple([num for row in state for num in row])
+    return tuple(num for row in state for num in row)
+
 
 def is_goal(state):
     return state == goal_state
 
+
 def get_neighbors(state):
-    """Sinh trạng thái kề"""
     neighbors = []
-    x, y = find_pos(state, 0)  # tìm ô trống
+    x, y = find_pos(state, 0)
     for dx, dy in moves:
         nx, ny = x + dx, y + dy
         if 0 <= nx < 3 and 0 <= ny < 3:
@@ -55,55 +47,98 @@ def get_neighbors(state):
             neighbors.append(new_state)
     return neighbors
 
+
+def inversion_count(state):
+    flat = [num for row in state for num in row if num != 0]
+    inv = 0
+    for i in range(len(flat)):
+        for j in range(i + 1, len(flat)):
+            if flat[i] > flat[j]:
+                inv += 1
+    return inv
+
+
+def is_solvable(state):
+    return inversion_count(state) % 2 == 0
+
+
+def generate_random_solvable():
+    arr = list(range(9))
+    while True:
+        random.shuffle(arr)
+        st = [arr[0:3], arr[3:6], arr[6:9]]
+        if is_solvable(st) and st != goal_state:
+            return st
+
+
 def greedy_best_first(start, heuristic):
-    """Greedy Best First Search"""
     frontier = []
     heapq.heappush(frontier, (heuristic(start), start, []))
     visited = set()
-    
     while frontier:
         h, state, path = heapq.heappop(frontier)
         if is_goal(state):
             return path + [state]
         visited.add(state_to_tuple(state))
         for neighbor in get_neighbors(state):
-            if state_to_tuple(neighbor) not in visited:
+            t = state_to_tuple(neighbor)
+            if t not in visited:
                 heapq.heappush(frontier, (heuristic(neighbor), neighbor, path + [state]))
     return None
 
+
 def a_star(start, heuristic):
-    """A* Search"""
     frontier = []
-    heapq.heappush(frontier, (heuristic(start), 0, start, []))  # (f, g, state, path)
+    heapq.heappush(frontier, (heuristic(start), 0, start, []))
     visited = set()
-    
     while frontier:
         f, g, state, path = heapq.heappop(frontier)
         if is_goal(state):
             return path + [state]
         visited.add(state_to_tuple(state))
         for neighbor in get_neighbors(state):
-            if state_to_tuple(neighbor) not in visited:
+            t = state_to_tuple(neighbor)
+            if t not in visited:
                 g_new = g + 1
                 f_new = g_new + heuristic(neighbor)
                 heapq.heappush(frontier, (f_new, g_new, neighbor, path + [state]))
     return None
 
+
 def print_path(path):
+    if path is None:
+        print("No solution found.")
+        return
     for step in path:
         for row in step:
             print(row)
         print("------")
+    print("Solution length:", len(path) - 1)
 
-# ------------------- TEST -------------------
-start_state = [[2,8,3],
-               [1,6,4],
-               [7,0,5]]
 
-print("Greedy Best-First Search (Manhattan):")
+# ------------------- MAIN -------------------
+print("=== 8 Puzzle Solver ===")
+
+start_state = [[2, 8, 3],
+               [1, 6, 4],
+               [7, 0, 5]]
+
+print("Start state:")
+for r in start_state:
+    print(r)
+print("Inversions:", inversion_count(start_state))
+
+if not is_solvable(start_state):
+    print("⚠️ This puzzle is UNSOLVABLE. Generating random solvable puzzle...")
+    start_state = generate_random_solvable()
+    for r in start_state:
+        print(r)
+    print("Inversions:", inversion_count(start_state))
+
+print("\nGreedy Best-First Search (Manhattan):")
 path = greedy_best_first(start_state, heuristic_manhattan)
 print_path(path)
 
-print("A* Search (Manhattan):")
+print("\nA* Search (Manhattan):")
 path = a_star(start_state, heuristic_manhattan)
 print_path(path)
